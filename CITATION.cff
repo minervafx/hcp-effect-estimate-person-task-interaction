@@ -1,0 +1,24 @@
+# DRAFT - repository URL, DOI and version are intentionally absent until the
+# author creates the repository and its archived release.
+cff-version: 1.2.0
+message: "If you use this code, please cite the associated manuscript."
+title: "Analysis code: person- and task-contrast-specific structure in cross-session fMRI effect estimates (HCP test/retest)"
+type: software
+license: MIT
+authors:
+  - family-names: Winthrop
+    given-names: Joseph
+    affiliation: Independent Researcher
+keywords:
+  - task fMRI
+  - individual differences
+  - test-retest
+  - fMRI fingerprinting
+  - Human Connectome Project
+preferred-citation:
+  type: article
+  title: "Person- and task-contrast-specific structure in cross-session fMRI effect estimates persists after resting-state and morphometric controls"
+  authors:
+    - family-names: Winthrop
+      given-names: Joseph
+  status: submitted

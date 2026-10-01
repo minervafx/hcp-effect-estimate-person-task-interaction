@@ -1,0 +1,9 @@
+{
+ "_about": "HISTORICAL COMPARISON ONLY. Interaction metrics computed by the project's earlier pipeline on HCP task-contrast Z-STATISTIC maps (merged level-2 dscalar files), which were at the time mis-described as effect estimates. Shown beside the effect-estimate result in manuscript Table 1 / Figure 1. Not produced by, and not an input to, any analysis in this repository.",
+ "source_file_sha256": "4a7ed281d6bc3e9f2fee687dfbdc4567dac962def36bc236f64907f1975502c0",
+ "R_ORIG": {
+  "rank1": 0.5892857142857143,
+  "idiff": 46.14705443729649,
+  "auc": 0.8925503636413915
+ }
+}

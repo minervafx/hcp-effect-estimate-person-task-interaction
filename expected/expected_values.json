@@ -1,0 +1,41 @@
+{
+ "_about": "Headline values reported in the manuscript (v2, Tables 1-4 and Sections 3.1-3.3), with the output file and JSON path that carries each. Produced by scripts 10-12 with the frozen seed 20260823. scripts/20_verify_expected.py compares a run against these.",
+ "tolerance_abs": 1e-9,
+ "checks": [
+  ["01_interaction_effect_estimate.json", "R_ORIG.rank1", 0.6130952380952381, "primary interaction rank-1"],
+  ["01_interaction_effect_estimate.json", "R_ORIG.idiff", 42.15113694963675, "primary interaction Idiff"],
+  ["01_interaction_effect_estimate.json", "R_ORIG.auc", 0.9031485053370942, "primary interaction AUC"],
+  ["01_interaction_effect_estimate.json", "R_ORIG.p_rank1_vs_null_person", 9.999000099990002e-05, "rank-1 permutation p = 1/10001"],
+  ["01_interaction_effect_estimate.json", "R_ORIG.p_idiff_vs_null_person", 9.999000099990002e-05, "Idiff permutation p = 1/10001"],
+  ["01_interaction_effect_estimate.json", "R_ORIG.per_transition.0.rank1", 0.6190476190476191, "WM 2BK-0BK interaction rank-1"],
+  ["01_interaction_effect_estimate.json", "R_ORIG.per_transition.1.rank1", 0.7619047619047619, "LANGUAGE STORY-MATH interaction rank-1"],
+  ["01_interaction_effect_estimate.json", "R_ORIG.per_transition.2.rank1", 0.6666666666666666, "MOTOR AVG-CUE interaction rank-1"],
+  ["01_interaction_effect_estimate.json", "R_ORIG.per_transition.3.rank1", 0.40476190476190477, "RELATIONAL REL-MATCH interaction rank-1"],
+  ["02_rest_control.json", "baseline.transfer.rank1", 0.4523809523809524, "WM contrast retrieval before rest control"],
+  ["02_rest_control.json", "baseline.transfer.auc", 0.8145428903268624, "WM contrast AUC before rest control"],
+  ["02_rest_control.json", "primary_REST1.k10.transfer.rank1", 0.21428571428571427, "WM contrast retrieval after REST1 k=10"],
+  ["02_rest_control.json", "primary_REST1.k10.transfer.auc", 0.7431557989049278, "WM contrast AUC after REST1 k=10"],
+  ["02_rest_control.json", "primary_REST1.k10.transfer.p_rank1", 0.0004997501249375312, "WM contrast p = 1/2001"],
+  ["02_rest_control.json", "primary_REST1.k10.specificity.pooled.auc_ss_ds", 0.8641935941043084, "pooled specificity AUC(SS,DS) after rest"],
+  ["02_rest_control.json", "primary_REST1.k10.specificity.pooled.auc_ss_sd", 0.844281462585034, "pooled specificity AUC(SS,SD) after rest"],
+  ["01_anatomy_interaction.json", "anatomy_features_kept", 1315, "retained FreeSurfer-derived features"],
+  ["01_anatomy_interaction.json", "R_ORIG.after.rank1", 0.49404761904761907, "R-ORIG rank-1 after anatomy"],
+  ["01_anatomy_interaction.json", "R_ORIG.after.idiff", 35.40935297592871, "R-ORIG Idiff after anatomy"],
+  ["01_anatomy_interaction.json", "R_ORIG.after.auc", 0.8653092334494773, "R-ORIG AUC after anatomy"],
+  ["01_anatomy_interaction.json", "R_ORIG.attribution.p_attrib_idiff", 0.000999000999000999, "R-ORIG Idiff attribution p = 1/1001"],
+  ["01_anatomy_interaction.json", "R_ORIG.attribution.p_attrib_rank1", 0.001998001998001998, "R-ORIG rank-1 attribution p = 2/1001"],
+  ["01_anatomy_interaction.json", "R_REST.before.rank1", 0.39880952380952384, "pooled interaction rank-1 after rest control (R-REST)"],
+  ["01_anatomy_interaction.json", "R_REST.before.idiff", 31.58981047046194, "pooled interaction Idiff after rest control"],
+  ["01_anatomy_interaction.json", "R_REST.before.auc", 0.8464686687683204, "pooled interaction AUC after rest control"],
+  ["01_anatomy_interaction.json", "R_REST.before.p_rank1", 9.999000099990002e-05, "R-REST rank-1 p = 1/10001"],
+  ["01_anatomy_interaction.json", "R_REST.before.p_idiff", 9.999000099990002e-05, "R-REST Idiff p = 1/10001"],
+  ["01_anatomy_interaction.json", "R_REST.after.rank1", 0.25595238095238093, "R-REST rank-1 after anatomy"],
+  ["01_anatomy_interaction.json", "R_REST.after.idiff", 26.161103233680365, "R-REST Idiff after anatomy"],
+  ["01_anatomy_interaction.json", "R_REST.after.auc", 0.8023555458768873, "R-REST AUC after anatomy"],
+  ["01_anatomy_interaction.json", "R_REST.attribution.p_attrib_idiff", 0.000999000999000999, "R-REST Idiff attribution p = 1/1001"]
+ ],
+ "derived": [
+  ["Idiff attenuation R-ORIG (%)", "100*(1 - R_ORIG.after.idiff / R_ORIG.before.idiff)", 15.9943],
+  ["Idiff attenuation R-REST (%)", "100*(1 - R_REST.after.idiff / R_REST.before.idiff)", 17.1850]
+ ]
+}

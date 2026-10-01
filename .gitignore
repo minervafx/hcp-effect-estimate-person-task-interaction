@@ -1,0 +1,12 @@
+# Derived HCP data and outputs must not be committed (HCP Open Access Data Use Terms).
+work/
+*.npz
+*.npy
+*.nii
+# Credentials
+.hcp_aws.env
+*.env
+# Python
+__pycache__/
+*.pyc
+.venv/
