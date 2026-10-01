@@ -4,6 +4,9 @@
 project results tree; the three historical z-statistic bars of Figure 1 come from
 expected/historical_zstat_reference.json (labelled historical). Drawing code unchanged.
 Captions live in the manuscript and are not regenerated here.
+
+[release v1.0.1] The Figure 3 footnote (Idiff attenuation and attribution p) is computed
+from 01_anatomy_interaction.json instead of being written as fixed text.
 """
 import html
 import json
@@ -43,5 +46,11 @@ chart('fig2_rest_control.svg','Rest control: attenuation with residual evidence'
 ('WM contrast rank-1',[r['baseline']['transfer']['rank1'],r['primary_REST1']['k10']['transfer']['rank1']],['Before','After'],.8,1/42),
 ('Interaction rank-1',[e['R_ORIG']['rank1'],a['R_REST']['before']['rank1']],['Before','After'],.8,1/42),
 ('Specificity AUC(SS,DS)',[r['baseline']['specificity']['auc_ss_ds'],r['primary_REST1']['k10']['specificity']['pooled']['auc_ss_ds']],['Before','After'],1,.5)],['After-control rank-1 p: WM contrast 1/2001; pooled interaction 1/10001.','AUC increase reflects changing similarity distributions; it is not increased retrieval.'])
-chart('fig3_anatomy_control.svg','Measured morphometry: partial attenuation','Effect-estimate interaction; LOSO anatomy prediction; k = 20, lambda = 1',[(m,[a['R_ORIG']['before'][k],a['R_ORIG']['after'][k],a['R_REST']['before'][k],a['R_REST']['after'][k]],['Original|before','Original|after','Rest|before','Rest|after'],mx,b) for m,k,mx,b in [('Rank-1','rank1',.8,1/42),('Idiff','idiff',60,None),('AUC','auc',1,.5)]],['Idiff attenuation: 16.0% (original), 17.2% (rest-controlled); attribution p = 1/1001 each.','After-control rank-1 and Idiff p = 1/10001. Attenuation is not causal variance explained.'])
+def _att(k):return 100*(1-a[k]['after']['idiff']/a[k]['before']['idiff'])
+def _pfrac(p,n):
+ c=round(p*(n+1));return f'{c}/{n+1}'
+_pa=[_pfrac(a[k]['attribution']['p_attrib_idiff'],a[k]['attribution']['b_shuf']) for k in ('R_ORIG','R_REST')]
+FIG3_NOTE=f"Idiff attenuation: {_att('R_ORIG'):.1f}% (original), {_att('R_REST'):.1f}% (rest-controlled); attribution p = "+(f"{_pa[0]} each." if _pa[0]==_pa[1] else f"{_pa[0]} and {_pa[1]}.")
+assert all(a[k][s]['p_rank1']==a[k][s]['p_idiff']==1/10001 for k in ('R_ORIG','R_REST') for s in ('after',)), 'Figure 3 footnote states p = 1/10001'
+chart('fig3_anatomy_control.svg','Measured morphometry: partial attenuation','Effect-estimate interaction; LOSO anatomy prediction; k = 20, lambda = 1',[(m,[a['R_ORIG']['before'][k],a['R_ORIG']['after'][k],a['R_REST']['before'][k],a['R_REST']['after'][k]],['Original|before','Original|after','Rest|before','Rest|after'],mx,b) for m,k,mx,b in [('Rank-1','rank1',.8,1/42),('Idiff','idiff',60,None),('AUC','auc',1,.5)]],[FIG3_NOTE,'After-control rank-1 and Idiff p = 1/10001. Attenuation is not causal variance explained.'])
 print('Wrote 3 figures to', FIG)

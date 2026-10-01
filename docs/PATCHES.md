@@ -2,6 +2,8 @@
 
 Every shipped file is listed with its project origin. Files marked **verbatim** are byte-identical to the originals. All others are shown as unified diffs. The changes are path/import wiring, the map-type guard, and removal of unused code (twin estimators, EEG loaders, and the z-statistic task-cache reader). No estimator, seed, permutation count or parameter was changed. `docs/REPRODUCIBILITY.md` documents that the patched code regenerates the saved outputs.
 
+**v1.0.1.** The anatomy-input builder `scripts/03_fetch_anatomy.py` is no longer a verbatim copy of the historical fetch functions: two input defects were corrected (see the section at the end and `docs/CHANGELOG.md`). As a result `01_anatomy_interaction.json` intentionally differs from the historical saved output; the other two outputs still regenerate it exactly.
+
 Removed runs of three or more lines are collapsed into a one-line marker, and two original tokens are redacted: a local credential-file path and an internal user-agent label. The original files' SHA-256 values are listed for exact verification by the author.
 
 | Shipped file | Origin (project `src/`) | Status | Original SHA-256 |
@@ -20,10 +22,11 @@ Removed runs of three or more lines are collapsed into a one-line marker, and tw
 | `scripts/10_interaction.py` | `phase3_1/01_interaction_effect_estimate.py` | patched | `62bc1672af1acefa…` |
 | `scripts/11_rest_control.py` | `phase3_1/02_rest_control_effect_estimate.py` | patched | `46b1c790c6823228…` |
 | `scripts/12_anatomy_control.py` | `phase3_1/01_anatomy_interaction_effect_estimate.py` | patched | `2df2e9a79d50c464…` |
-| `scripts/03_fetch_anatomy.py` | functions copied verbatim from `phase2_9/02_fetch.py` | new wrapper | — |
-| `scripts/00_build_atlas.py` | new; reproduces the historical `labels379.npy` exactly | new | — |
+| `scripts/03_fetch_anatomy.py` | v1.0.0: functions copied verbatim from `phase2_9/02_fetch.py`; v1.0.1: corrected (vertex-indexed surface mapping, verified aseg global fields, no silent fill) | corrected in v1.0.1 | — |
+| `scripts/00_build_atlas.py` | new; reproduces the historical `labels379.npy` exactly; v1.0.1 adds a vertex-identity check | new | — |
 | `scripts/20_verify_expected.py`, `scripts/30_make_figures.py` (drawing code from the manuscript figure script) | new/adapted | new | — |
 | `hcpee/paths.py`, `hcpee/map_type_guard.py`, `tests/test_map_type_guard.py` | new | new | — |
+| `hcpee/surface_map.py`, `tests/test_anatomy_inputs.py`, `tests/test_anatomy_real_data.py`, `docs/CHANGELOG.md` | new in v1.0.1 | new | — |
 
 ## `hcpee/hcp_s3.py`  (from `phase2_9/hcp_s3.py`)
 
@@ -385,3 +388,14 @@ Removed runs of three or more lines are collapsed into a one-line marker, and tw
 +               map_type_guard=GUARD, seed=SEED, n_perm=NPERM, n_boot=NBOOT,
                 b_shuf=BSHUF, k_primary=K_PRIMARY, lam_primary=LAM_PRIMARY,
 ```
+
+## v1.0.1: `scripts/03_fetch_anatomy.py` (corrected)
+
+The historical functions shipped verbatim in v1.0.0 had two input defects. Both concern only the anatomy block of the morphometric control; the correction is described in full in `docs/CHANGELOG.md`.
+
+1. **Surface maps placed by position.** `fetch_anatomy` wrote each 32k surface map into the 91,282-grayordinate frame with `full[:gray.size] = gray`. That is correct for `corrThickness` and `MyelinMap_BC` (59,412 columns, same vertices and order as the atlas), but not for `sulc`, whose 64,984 columns are the full 32,492-vertex hemispheres. v1.0.1 maps every surface file through its CIFTI `VertexIndices` onto the dlabel's (`hcpee/surface_map.py`), and raises if a cortical parcel is not finite or if surface data reach a subcortical label.
+2. **Global volumes looked up under the wrong field.** `parse_aseg` keyed `# Measure` rows by their first field, while five of the six `ANAT_GLOBAL` names are second-field names. The misses became NaN and were replaced by the subject's mean over the other block-A features. v1.0.1 matches each global quantity by its verified `(first, second)` field pair, requires exactly one match, and raises on any missing or non-finite block-A value instead of filling it.
+
+The feature definitions, their order, the parcellation and the npz layout are unchanged. The open-header helper was replaced by whole-object reads, so that each input file's SHA-256 can be recorded in `anatomy_provenance{,_retest}.json`.
+
+`scripts/30_make_figures.py` now computes the Figure 3 footnote (Idiff attenuation and attribution p) from the outputs. On v1.0.0 outputs it reproduces the v1.0.0 figures byte for byte.

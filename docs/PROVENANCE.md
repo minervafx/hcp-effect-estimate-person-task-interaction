@@ -1,6 +1,6 @@
 # Provenance of the reported numbers
 
-Each value reported in the manuscript (v2) comes from one output file of this repository. `expected/expected_values.json` lists the exact JSON path for each, and `scripts/20_verify_expected.py` checks them.
+Each value reported in the manuscript comes from one output file of this repository. `expected/expected_values.json` lists the exact JSON path for each, and `scripts/20_verify_expected.py` checks them.
 
 ## Chain
 
@@ -9,7 +9,8 @@ HCP Open Access (hcp-openaccess S3)
  ├─ HCP_S1200_GroupAvg_v1.zip :: HCP-MMP1.0 group dlabel ──► 00_build_atlas.py ──► labels379.npy (379 parcels)
  ├─ level-2 COPE maps: cope{d}.feat/cope1.dtseries.nii ──────► 01_fetch_effect_estimates.py ──► effect_estimate_cache/ (+ MAP_TYPE_MANIFEST.json)
  ├─ rfMRI_REST{1,2}_{LR,RL}_Atlas_MSMAll_hp2000_clean ────────► 02_fetch_rest.py ──► rest_cache/
- └─ FreeSurfer stats + 32k corrThickness/MyelinMap_BC/sulc ────► 03_fetch_anatomy.py ──► anatomy/anatomy{,_retest}.npz
+ └─ FreeSurfer stats + 32k corrThickness/MyelinMap_BC/sulc ────► 03_fetch_anatomy.py ──► anatomy/anatomy{,_retest}.npz (+ provenance json)
+    (surface maps placed on the atlas by CIFTI vertex index, using the dlabel from 00_build_atlas.py)
                                                                     │
  effect_estimate_cache ─────────────────────────────────────────────┼─► 10_interaction.py ──► 01_interaction_effect_estimate.json
  effect_estimate_cache + rest_cache ────────────────────────────────┼─► 11_rest_control.py ──► 02_rest_control.json
@@ -29,7 +30,7 @@ HCP Open Access (hcp-openaccess S3)
 | Table 2: pooled SS/SD/DS/AUC before and after rest | `11_rest_control.py` | `baseline.specificity.*`; `primary_REST1.k10.specificity.pooled.*` |
 | §3.2: pooled interaction after rest (0.3988 …) | `12_anatomy_control.py` | `R_REST.before.*` |
 | §3.2: subject-scrambled nuisance interval | `11_rest_control.py` | `NC2_permuted_nuisance.k10` |
-| §3.3 / Table 3: anatomy before/after, attribution | `12_anatomy_control.py` | `R_ORIG.{before,after,attribution}`, `R_REST.{before,after,attribution}` |
+| §3.3 / Table 3: anatomy before/after, attribution (v1.0.1 corrected anatomy block) | `12_anatomy_control.py` | `R_ORIG.{before,after,attribution}`, `R_REST.{before,after,attribution}` |
 | Table 4: per-contrast rank-1 before/after anatomy | `12_anatomy_control.py` | `R_*.{before,after}.per_transition` |
 | §3.3: k × λ ladder; out-of-fold R² | `12_anatomy_control.py` | `NC6_ladder`, `R_*.cv_r2_*` |
 | Supplement S1 | `10`, `11`, `12` | bootstrap `rank1_ci` / `idiff_ci`; NC controls; `secondary`; `diag_*` |
@@ -49,3 +50,7 @@ The repository contains no EEG analysis. The historical z-statistic analyses (Ta
 - 1,000 anatomy-row shuffles for primary attribution, and 200 for secondary cells.
 - 10,000 bootstrap draws.
 - Rest: PCA k = 10 on the test session. Anatomy: k = 20, λ = 1, leave-one-subject-out.
+
+## Anatomy block versions
+
+The morphometric values reported in the manuscript come from the corrected anatomy block of v1.0.1: 1,366 candidate features, 1,309 retained. v1.0.0 and the project's historical analyses, including the historical z-statistic anatomy results quoted in Supplement S2, used the earlier block, in which the sulcal-depth features were misaligned and five global volumes were fill values (1,315 retained). See `docs/CHANGELOG.md`.

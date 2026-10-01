@@ -4,7 +4,9 @@ set -euo pipefail
 cd "$(dirname "$0")"
 PY=${PYTHON:-python3}
 $PY tests/test_map_type_guard.py
+$PY tests/test_anatomy_inputs.py
 $PY scripts/00_build_atlas.py --fetch
+$PY tests/test_anatomy_real_data.py
 $PY scripts/01_fetch_effect_estimates.py
 $PY scripts/02_fetch_rest.py
 $PY scripts/03_fetch_anatomy.py

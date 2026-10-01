@@ -17,6 +17,10 @@ the first included subject (--fetch), or from a local 91,282-grayordinate CIFTI 
 [release] New script. The historical project built the same vector interactively; this
 script reproduces the saved vector exactly (verified 2026-09-29: array-equal to the file
 used for all reported analyses, SHA-256 0e361613...). See docs/PROVENANCE.md.
+
+[release v1.0.1] Adds a check that the cortical VertexIndices of the COPE (or --cifti)
+header equal those of the dlabel, so labels 1-360 provably sit on the same surface
+vertices as the task data. The label vector written is unchanged.
 """
 import argparse
 import hashlib
@@ -30,6 +34,7 @@ sys.path.insert(0, os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(
                                 "hcpee"))
 import paths                                                          # noqa: E402
 import cifti                                                          # noqa: E402
+import surface_map as SM                                              # noqa: E402
 
 ZIP_KEY = "HCP_Resources/Workbench/HCP_S1200_GroupAvg_v1.zip"
 MEMBER = ("HCP_S1200_GroupAvg_v1/Q1-Q6_RelatedValidation210.CorticalAreas_dil_Final_"
@@ -42,7 +47,7 @@ def header_from_bytes(get):
     buf = get(0, 800_000)
     while True:
         try:
-            return cifti.open_header(buf)
+            return cifti.open_header(buf), buf
         except cifti.NeedMoreBytes as e:
             buf = get(0, e.needed)
 
@@ -75,17 +80,19 @@ def main():
 
     if a.cifti:
         buf = open(a.cifti, "rb").read()
-        h = header_from_bytes(lambda lo_, hi_: buf[lo_:hi_])
+        h, hbuf = header_from_bytes(lambda lo_, hi_: buf[lo_:hi_])
     elif s3 is not None:
         subj = [l.strip() for l in open(paths.SUBJECTS_FILE) if l.strip()][0]
         key = (f"HCP_1200/{subj}/MNINonLinear/Results/tfMRI_WM/tfMRI_WM_hp200_s2_level2_"
                f"MSMAll.feat/GrayordinatesStats/cope11.feat/cope1.dtseries.nii")
-        h = header_from_bytes(lambda lo_, hi_: s3.get_range(key, lo_, hi_))
+        h, hbuf = header_from_bytes(lambda lo_, hi_: s3.get_range(key, lo_, hi_))
     else:
         raise SystemExit("need --fetch or --cifti for the subcortical brain-model layout")
     st = h.structures if not callable(h.structures) else h.structures()
     if h.n_cols != GRAYORDINATES:
         raise SystemExit(f"CIFTI has {h.n_cols} grayordinates, expected {GRAYORDINATES}")
+    if not SM.same_cortex(SM.surface_models(hbuf), SM.surface_models(raw)):
+        raise SystemExit("cortical VertexIndices of the task CIFTI differ from the dlabel's")
 
     labels = np.zeros(GRAYORDINATES, np.int32)
     labels[:N_CORTEX] = cortex.astype(np.int32)

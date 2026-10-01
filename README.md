@@ -2,11 +2,13 @@
 
 This repository holds the analysis code for the manuscript
 
-> Winthrop, J. *Person- and task-contrast-specific structure in cross-session fMRI effect estimates persists after resting-state and morphometric controls.* (Manuscript under consideration; not yet peer reviewed.)
+> Winthrop, J. *Person- and task-contrast-specific structure in cross-session fMRI effect estimates persists after resting-state and morphometric controls.* (Manuscript; not peer reviewed.)
 
 The analyses ask whether there is reproducible person- and task-contrast-specific structure across HCP test/retest fMRI effect estimates. Specifically: after removing each person's average profile and each contrast's average profile, can a person's residual pattern still be matched across sessions, and how much of that structure remains after specified resting-state and morphometric controls?
 
 **No HCP data are included.** You must obtain the data yourself under the HCP Open Access Data Use Terms (see [Data access](#data-access)).
+
+**Version.** This is v1.0.1, a bug-fix release of v1.0.0. It corrects how the anatomy block of the morphometric control is built (sulcal-depth vertex alignment and five unparsed global volumes); the primary and resting-state analyses are unchanged. v1.0.0 remains available as a historical release. See [`docs/CHANGELOG.md`](docs/CHANGELOG.md).
 
 ---
 
@@ -42,10 +44,12 @@ This removes any additive person-plus-contrast profile exactly on the analysed f
   - subject-scrambled nuisance draws.
 
   The pooled **interaction** after rest control (R-REST) is computed in `scripts/12_anatomy_control.py`, as the "before anatomy" state of R-REST.
-- **Measured-morphometry control** (`scripts/12_anatomy_control.py`). The anatomy block has 1,366 FreeSurfer-derived features, of which 1,315 are retained after a zero-variance screen:
-  - Desikan-Killiany thickness, area and curvature;
-  - subcortical and global volumes;
-  - parcel means of corrected thickness, myelin-related contrast (MyelinMap_BC) and sulcal depth.
+- **Measured-morphometry control** (`scripts/12_anatomy_control.py`). The anatomy block has 1,366 FreeSurfer-derived features, of which 1,309 are retained after a zero-variance screen:
+  - Desikan-Killiany thickness, area and curvature (2 × 34 × 3);
+  - 19 subcortical volumes and six global volumes from `aseg.stats` (estimated intracranial, total gray, cortex, subcortical gray, supratentorial and brain-segmentation volume);
+  - parcel means (379 labels) of corrected thickness, myelin-related contrast (MyelinMap_BC) and sulcal depth. Each surface map is placed on the atlas by its CIFTI vertex indices (`hcpee/surface_map.py`).
+
+  The screen removes the 57 columns of the 19 subcortical labels in the three surface measures, which carry no surface data.
 
   The anatomy is mapped to the interaction residual by leave-one-subject-out prediction (fold-standardised PCA with k = 20, then ridge with λ = 1), separately for each session and contrast. The prediction is subtracted from the residual, and survival is re-tested. Attribution compares the Idiff decrease with 1,000 anatomy-row permutations.
 
@@ -109,7 +113,7 @@ The HCP Open Access terms govern any redistribution of derived data. Keep your `
 | `00_build_atlas.py --fetch` | One member of `HCP_Resources/Workbench/HCP_S1200_GroupAvg_v1.zip`, the HCP-MMP1.0 group dlabel (SHA-256 checked), plus the header of one COPE file for the 91,282-grayordinate layout | `work/atlas/labels379.npy`, `parcel_names.json` |
 | `01_fetch_effect_estimates.py` | 1,008 COPE files: 42 × 2 sessions × 4 tasks × (contrast + 2 conditions) | `work/effect_estimate_cache/{subject}_{session}.npz` + `MAP_TYPE_MANIFEST.json` (≈29 MB) |
 | `02_fetch_rest.py` | `rfMRI_REST{1,2}_{LR,RL}_Atlas_MSMAll_hp2000_clean.dtseries.nii` + `Movement_RelativeRMS_mean.txt`, both sessions (336 runs; ≈147 GB streamed, ≈15 min with 4 threads) | `work/rest_cache/{subject}_{session}_{run}.npz` (parcellated timeseries, ≈440 MB) |
-| `03_fetch_anatomy.py` | `T1w/{s}/stats/{lh,rh}.aparc.stats`, `aseg.stats`; `MNINonLinear/fsaverage_LR32k/{s}.{corrThickness,MyelinMap_BC,sulc}.32k_fs_LR.dscalar.nii` | `work/anatomy/anatomy.npz`, `anatomy_retest.npz` |
+| `03_fetch_anatomy.py` (needs the dlabel written by `00_build_atlas.py`) | `T1w/{s}/stats/{lh,rh}.aparc.stats`, `aseg.stats`; `MNINonLinear/fsaverage_LR32k/{s}.{corrThickness,MyelinMap_BC,sulc}.32k_fs_LR.dscalar.nii` | `work/anatomy/anatomy.npz`, `anatomy_retest.npz`, `anatomy_provenance{,_retest}.json` (input sizes and SHA-256) |
 
 ## 4. Setup and execution
 
@@ -121,7 +125,9 @@ pip install -r requirements.txt
 export HCPEE_WORK=$PWD/work          # optional
 
 python tests/test_map_type_guard.py
+python tests/test_anatomy_inputs.py
 python scripts/00_build_atlas.py --fetch
+python tests/test_anatomy_real_data.py   # needs HCP credentials; skips without them
 python scripts/01_fetch_effect_estimates.py
 python scripts/02_fetch_rest.py
 python scripts/03_fetch_anatomy.py
@@ -133,6 +139,8 @@ python scripts/30_make_figures.py
 ```
 
 `run_all.sh` runs the same sequence. Times are single-process on a 3-vCPU machine.
+
+**Numerical reproducibility.** With numpy 2.2.6 (the pinned version) the outputs are bit-identical across our runs. With numpy 2.3.3 we observed differences of at most about 1.4e-14 in individual statistics; `scripts/20_verify_expected.py` compares at an absolute tolerance of 1e-9.
 
 **Outputs** (in `work/outputs/`):
 
@@ -146,7 +154,7 @@ python scripts/30_make_figures.py
 
 The run also writes machine-readable logs `00_fetch_log.json` and `01_fetch_rest_log.json`.
 
-## 5. Headline values (manuscript v2)
+## 5. Headline values
 
 | Quantity | Value |
 |---|---|
@@ -157,11 +165,11 @@ The run also writes machine-readable logs `00_fetch_log.json` and `01_fetch_rest
 | WM contrast retrieval, before → after REST1 k=10 | 0.4523809524 → 0.2142857143; AUC 0.7431557989; p = 1/2001 |
 | Pooled specificity AUC(SS,DS) after rest | 0.8641935941 |
 | Pooled interaction after rest (R-REST) | rank-1 0.3988095238, Idiff +31.58981047, AUC 0.8464686688, p = 1/10001 |
-| Anatomy, R-ORIG before → after | rank-1 0.6131 → 0.4940476190; Idiff 42.1511 → 35.40935298; AUC 0.9031 → 0.8653092334 |
-| Anatomy, R-REST before → after | rank-1 0.3988 → 0.2559523810; Idiff 31.5898 → 26.16110323; AUC 0.8465 → 0.8023555459 |
-| Idiff attenuation | 15.9943 % (R-ORIG), 17.1850 % (R-REST); attribution p = 1/1001 each |
+| Anatomy, R-ORIG before → after | rank-1 0.6131 → 0.4821428571; Idiff 42.1511 → 34.90888454; AUC 0.9031 → 0.8685567723 |
+| Anatomy, R-REST before → after | rank-1 0.3988 → 0.2738095238; Idiff 31.5898 → 26.11739034; AUC 0.8465 → 0.8062105940 |
+| Idiff attenuation | 17.1816 % (R-ORIG), 17.3234 % (R-REST); attribution p = 1/1001 each |
 
-**These are descriptive metric changes, not percentages of variance or causal fractions explained.** `scripts/20_verify_expected.py` checks all of them (31 values plus 2 derived) at an absolute tolerance of 1e-9.
+**These are descriptive metric changes, not percentages of variance or causal fractions explained.** `scripts/20_verify_expected.py` checks all of them (36 values plus 2 derived) at an absolute tolerance of 1e-9. The anatomy rows are v1.0.1 values; v1.0.0's are listed in `docs/CHANGELOG.md`.
 
 ## 6. Scope and limitations
 
@@ -178,7 +186,8 @@ These are the manuscript's own boundaries:
 ## 7. Provenance
 
 - `docs/PROVENANCE.md` maps each reported number to its script, inputs and output key.
-- `docs/PATCHES.md` lists every difference from the scripts that produced the manuscript's saved outputs. These are path and import wiring, the map-type guard, and removal of unused code.
+- `docs/PATCHES.md` lists every difference from the project scripts the code was taken from. These are path and import wiring, the map-type guard, removal of unused code, and (v1.0.1) the anatomy-input correction.
+- `docs/CHANGELOG.md` records the v1.0.1 correction and its effect on the reported values.
 
 The two analysis plans were frozen locally on 2026-09-26, before the effect-estimate analyses were run. They were not deposited in an external registry. Their SHA-256 hashes are recorded in `hcpee/paths.py` and in every output. The documents themselves are not part of this repository.
 
@@ -199,7 +208,7 @@ The HCP-MMP1.0 parcellation is from Glasser et al. (2016), *Nature* 536:171–17
 
 ## 9. AI assistance
 
-Large-language-model coding agents (principally Anthropic's Claude via Claude Code, with OpenAI Codex also used) helped write, debug and package this code. The author directed the work and is responsible for it.
+Large-language-model coding agents (principally Anthropic's Claude via Claude Code, with OpenAI Codex also used) helped write, debug, audit and package this code, including the v1.0.1 correction. The author directed the work and is responsible for it.
 
 ## 10. License
 
